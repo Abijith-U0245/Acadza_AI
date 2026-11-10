@@ -96,7 +96,7 @@ We score this file automatically against our ground truth.
 ### Submission links
 
 - Public GitHub repository: **[TO COMPLETE: paste the public repository URL]**
-- Live faculty console: **[TO COMPLETE: paste the deployed URL]**
+- Live faculty console: **https://acadza-report-fix-alpha.vercel.app/**
 - Three-minute demo video: **[TO COMPLETE: paste the Loom, unlisted YouTube, or Drive URL]**
 
 The current local implementation uses precomputed deterministic results and

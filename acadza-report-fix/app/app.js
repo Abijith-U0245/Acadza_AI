@@ -36,19 +36,39 @@ function validateEdit(result, question) {
   if (facultyOnlyRepairs.has(result.repair)) return { valid: false, reason: 'This repair type must remain faculty-authored.' };
   return { valid: true, reason: 'Source, scope, and replacement checks passed.' };
 }
+function proposalSignature(result, edit = result.edit) {
+  return edit ? [result.repair, edit.field, edit.find, edit.replace].join('|') : null;
+}
+function questionState(result, question) {
+  const related = state.results.filter(item => item.questionId === result.questionId);
+  const valid = related.map(item => ({ item, check: validateEdit(item, question) })).filter(entry => entry.check.valid && entry.item.edit);
+  const signatures = [...new Set(valid.map(entry => proposalSignature(entry.item)))];
+  const approved = state.history.find(entry => entry.action === 'Approved proposal' && entry.questionId === result.questionId);
+  return {
+    related,
+    count: related.length,
+    conflict: signatures.length > 1,
+    approvedSignature: approved?.repairSignature || null,
+    currentApproved: approved?.repairSignature === proposalSignature(result)
+  };
+}
 function category(result) {
   if (result.route === 'faculty_review' || (result.verdict === 'defect' && result.repair && facultyOnlyRepairs.has(result.repair))) return 'needs_review';
   if (result.verdict === 'defect') return 'defect';
   if (result.verdict === 'no_error') return 'no_error';
   return 'no_action';
 }
-function status(result, editCheck) {
+function status(result, editCheck, qState) {
+  if (qState?.conflict) return 'Faculty review required';
+  if (qState?.approvedSignature) return qState.currentApproved ? 'Already approved for question' : 'Covered by approved repair';
   if (category(result) === 'needs_review') return 'Faculty review required';
   if (category(result) === 'defect' && result.route !== 'no_change') return editCheck.valid ? 'Ready for faculty approval' : 'Faculty review required';
   if (result.verdict === 'no_error') return 'No error detected';
   return 'No action required';
 }
-function actionFor(result, editCheck) {
+function actionFor(result, editCheck, qState) {
+  if (qState?.conflict) return 'Resolve conflicting proposals';
+  if (qState?.approvedSignature) return 'No duplicate approval';
   if (result.verdict === 'no_error') return 'No action required';
   if (category(result) === 'needs_review' || !editCheck.valid && result.edit) return 'Escalate for further review';
   if (result.edit && editCheck.valid) return 'Approve proposal';
@@ -90,9 +110,9 @@ function renderStats() {
   const approved = state.history.filter(entry => entry.action === 'Approved proposal').length;
   const cards = [
     ['Total reports', state.reports.length, 'Every supplied report'],
-    ['Suspected defects', verdictCounts.defect || 0, 'AI verdict = defect'],
+    ['Suspected defects', verdictCounts.defect || 0, 'AI verdict = defect; overlaps pending'],
     ['Student misunderstandings', verdictCounts.no_error || 0, 'AI verdict = no error'],
-    ['Pending faculty reviews', pending, 'Review-required or actionable defects'],
+    ['Pending faculty reviews', pending, 'Review-required/actionable; excludes no_change'],
     ['Approved repairs', approved, 'This session audit only']
   ];
   $('#stats').innerHTML = cards.map(card => `<div class="stat"><div class="label">${card[0]}</div><div class="value">${card[1]}</div><div class="trend">${card[2]}</div></div>`).join('');
@@ -112,14 +132,14 @@ function renderQueue() {
   $('#queue-description').textContent = `${descriptions[filter]} · every report appears exactly once`;
   $('#queue-total').textContent = rows.length;
   $('#case-list').innerHTML = rows.length ? rows.map(item => {
-    const { result, report, question } = item, check = validateEdit(result, question);
+    const { result, report, question } = item, check = validateEdit(result, question), qState = questionState(result, question);
     return `<article class="case" tabindex="0" role="button" aria-label="Open ${esc(result.reportId)}" data-id="${esc(result.reportId)}">
       <div class="case-id">${esc(result.reportId)}<small>${esc(result.questionId)}</small></div>
       <div class="case-main"><h3>${esc(question.subject)} · ${esc(question.chapter)}</h3><p>${esc(report.comment)}</p>
         <small class="related-count">${reportsByQuestion[result.questionId]} report${reportsByQuestion[result.questionId] === 1 ? '' : 's'} on this question</small>
         <span class="chip ${category(result)}">${esc(result.verdict)}</span>${result.repair ? `<span class="repair">${esc(result.repair)}</span>` : ''}</div>
       <div class="confidence"><strong>${Math.round(result.confidence * 100)}%</strong><small>confidence</small><div class="bar"><i style="width:${result.confidence * 100}%"></i></div></div>
-      <div class="route"><strong>${esc(status(result, check))}</strong><small>${esc(actionFor(result, check))}</small></div><div class="chev">›</div>
+      <div class="route"><strong>${esc(status(result, check, qState))}</strong><small>${esc(actionFor(result, check, qState))}</small></div><div class="chev">›</div>
     </article>`;
   }).join('') : '<div class="overview-card empty-state"><h3>No reports in this category</h3><p>Try “All reports” or clear the search.</p></div>';
   document.querySelectorAll('.case').forEach(card => {
@@ -131,27 +151,30 @@ function openDrawer(id) {
   const context = reportContext(id);
   if (!context.result || !context.question) return;
   const { result, report, question, edit, editCheck } = context;
+  const qState = questionState(result, question);
   const body = bodyOf(question), source = edit ? sourceValue(question, edit.field) : '';
   const after = editCheck.valid ? source.replace(edit.find, edit.replace) : '';
   const limitation = result.confidence >= .9 ? 'High confidence still indicates model-supported likelihood, not correctness; faculty approval is required.' : 'Medium or lower confidence is a signal for checking, not a guarantee of correctness.';
   $('#drawer-content').innerHTML = `<p class="eyebrow">REPORT ${esc(result.reportId)} · ${esc(report.source)}</p><h2>${esc(question.subject)} · ${esc(question.chapter)}</h2><p class="sub">${esc(question._id)} · ${esc(question.questionType)} · ${new Date(report.reportedAt).toLocaleDateString()}</p>
     <div class="detail-section"><div class="detail-label">STUDENT REPORT</div><div class="comment">“${esc(report.comment)}”</div></div>
     <div class="detail-section"><div class="detail-label">ORIGINAL QUESTION</div><div class="question">${body.question || '<em>No question text supplied</em>'}</div></div>
-    <div class="detail-section"><div class="detail-label">AI DECISION · <span class="chip ${category(result)}">${esc(result.verdict)}</span> <span class="chip faculty_review">${Math.round(result.confidence * 100)}% confidence</span></div><p class="evidence">${esc(result.evidence)}</p><p class="limitation">${esc(limitation)}</p></div>
+    <div class="detail-section"><div class="detail-label">AI DECISION · <span class="chip ${category(result)}">${esc(result.verdict)}</span> <span class="chip faculty_review">${Math.round(result.confidence * 100)}% confidence</span></div><p class="evidence">${esc(result.evidence)}</p><p class="limitation">${esc(limitation)}</p>${qState.count > 1 ? `<p class="related-summary">${qState.count} reports share this question. ${qState.conflict ? 'Conflicting proposals require faculty review.' : qState.approvedSignature ? 'An equivalent repair is already approved for this question; duplicate approval is blocked.' : 'Equivalent proposals can be approved once at question level.'}</p>` : ''}</div>
     <div class="detail-section"><div class="detail-label">PROPOSED REPAIR · ${esc(result.repair || 'NONE')}</div>${edit ? `<div class="repair-check ${editCheck.valid ? 'valid' : 'invalid'}"><strong>${editCheck.valid ? 'Validated proposal' : 'Proposal blocked'}</strong><span>${esc(editCheck.reason)}</span></div><div class="diff"><div><small>BEFORE · ${esc(edit.field)}</small>${editCheck.valid ? renderField(source, edit.field) : '<em>Unavailable until proposal is valid</em>'}</div><div class="after"><small>AFTER</small>${editCheck.valid ? renderField(after, edit.field) : '<em>Not eligible for approval</em>'}</div></div>` : '<div class="empty-proposal">No proposed edit. This report must not be presented as ready for approval.</div>'}</div>
     <div class="detail-section"><div class="detail-label">SUGGESTED STUDENT REPLY</div><div class="comment">${esc(result.student_reply)}</div></div>
-    <div class="action-row">${actionButtons(result, editCheck, id)}</div>`;
+    <div class="action-row">${actionButtons(result, editCheck, qState, id)}</div>`;
   $('#drawer').classList.remove('hidden');
   document.querySelectorAll('.action-row button').forEach(button => button.addEventListener('click', () => handleAction(button.dataset.action, id)));
 }
-function actionButtons(result, check, id) {
-  const approval = check.valid && result.route !== 'no_change' && category(result) !== 'needs_review';
+function actionButtons(result, check, qState, id) {
+  const approval = check.valid && result.route !== 'no_change' && category(result) !== 'needs_review' && !qState.conflict && !qState.approvedSignature;
   const edit = result.edit ? '<button data-action="Edit proposal">Edit proposal</button>' : '';
-  return `${approval ? '<button class="approve" data-action="Approved proposal">Approve proposal</button>' : ''}${edit}${result.verdict === 'no_error' ? '<button data-action="Marked as no error">Mark as no error</button>' : '<button class="reject" data-action="Rejected proposal">Reject proposal</button>'}<button data-action="Escalated for further review">Escalate for further review</button>`;
+  const conflict = qState.conflict ? '<span class="save-error">Conflicting proposals for this question require faculty review.</span>' : '';
+  return `${approval ? '<button class="approve" data-action="Approved proposal">Approve proposal</button>' : ''}${edit}${result.verdict === 'no_error' ? '<button data-action="Marked as no error">Mark as no error</button>' : '<button class="reject" data-action="Rejected proposal">Reject proposal</button>'}<button data-action="Escalated for further review">Escalate for further review</button>${conflict}`;
 }
 function handleAction(action, id) {
   const context = reportContext(id);
-  if (action === 'Approved proposal' && !context.editCheck.valid) { openDrawer(id); return; }
+  const qState = questionState(context.result, context.question);
+  if (action === 'Approved proposal' && (!context.editCheck.valid || qState.conflict || qState.approvedSignature)) { openDrawer(id); return; }
   if (action === 'Edit proposal') {
     if (!context.edit) return;
     const row = document.querySelector('.action-row');
@@ -173,8 +196,13 @@ function handleAction(action, id) {
     }
     state.activeEdits.set(id, edited); openDrawer(id); return;
   }
-  const entry = { reportId: id, questionId: context.result.questionId, action, facultyId: null, timestamp: new Date().toISOString(), originalContent: context.editCheck.valid ? sourceValue(context.question, context.edit.field) : null, approvedContent: action === 'Approved proposal' ? context.edit.replace : null };
-  state.history.unshift(entry); sessionStorage.setItem('acadza-audit', JSON.stringify(state.history)); renderStats(); renderHistory(); openDrawer(id);
+  const entry = { reportId: id, questionId: context.result.questionId, action, facultyId: null, timestamp: new Date().toISOString(), originalContent: context.editCheck.valid ? sourceValue(context.question, context.edit.field) : null, approvedContent: action === 'Approved proposal' ? context.edit.replace : null, repairSignature: action === 'Approved proposal' ? proposalSignature(context.result, context.edit) : null };
+  const entries = [entry];
+  if (action === 'Approved proposal') {
+    state.results.filter(item => item.questionId === context.result.questionId && item.reportId !== id && proposalSignature(item) === entry.repairSignature)
+      .forEach(item => entries.push({ reportId: item.reportId, questionId: item.questionId, action: 'Covered by approved proposal', parentReportId: id, facultyId: null, timestamp: entry.timestamp, originalContent: null, approvedContent: null, repairSignature: entry.repairSignature }));
+  }
+  state.history.unshift(...entries); sessionStorage.setItem('acadza-audit', JSON.stringify(state.history)); renderStats(); renderHistory(); openDrawer(id);
 }
 function closeDrawer() { $('#drawer').classList.add('hidden'); }
 function switchView(view) {
