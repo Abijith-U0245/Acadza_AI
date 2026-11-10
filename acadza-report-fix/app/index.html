@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Acadza · Report → Fix</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="shell">
+    <aside class="sidebar">
+      <div class="brand"><span class="brand-mark">A</span><span>acadza</span></div>
+      <div class="workspace-label">FACULTY WORKSPACE</div>
+      <nav>
+        <button class="nav-item active" data-view="queue"><span>◈</span> Review queue <b id="nav-count">0</b></button>
+        <button class="nav-item" data-view="overview"><span>▦</span> Overview</button>
+        <button class="nav-item" data-view="history"><span>↺</span> Audit history</button>
+      </nav>
+      <div class="sidebar-bottom">
+        <div class="health"><span class="dot"></span><span><strong>Engine online</strong><small>Precomputed safe mode</small></span></div>
+        <div class="user"><span class="avatar">F</span><span><strong>Faculty reviewer</strong><small>Identity not supplied</small></span></div>
+      </div>
+    </aside>
+    <main>
+      <header class="topbar"><div><p class="eyebrow">CONTENT QUALITY / <span id="current-view">REVIEW QUEUE</span></p><h1 id="page-title">Review queue</h1></div><div class="top-actions"><button class="icon-btn" title="Notifications">♢<i></i></button><button class="help">?</button></div></header>
+      <section id="queue-view" class="view">
+        <div class="stats" id="stats"></div>
+        <div class="queue-toolbar"><div><h2>Report queue <span id="queue-total" class="count-pill">0</span></h2><p id="queue-description">All reports · grouped by question · highest confidence first</p></div><div class="filters"><label>Filter <select id="filter"><option value="all">All reports</option><option value="needs_review">Needs faculty review</option><option value="defect">Suspected defects</option><option value="no_error">Student misunderstandings / no error</option><option value="no_action">No action required</option></select></label><label>Search <input id="search" aria-label="Search reports" placeholder="Report, question or comment"></label></div></div>
+        <div id="case-list" class="case-list"></div>
+      </section>
+      <section id="overview-view" class="view hidden"></section>
+      <section id="history-view" class="view hidden"></section>
+    </main>
+  </div>
+  <div id="drawer" class="drawer-backdrop hidden"><aside class="drawer"><button id="close-drawer" class="close">×</button><div id="drawer-content"></div></aside></div>
+  <script src="app.js"></script>
+</body>
+</html>
