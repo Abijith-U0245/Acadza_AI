@@ -188,24 +188,6 @@ for development only and is not a public submission URL.
 
    **Answer:** I want to work on this because it addresses a real quality problem affecting students at scale, while requiring both strong engineering and careful AI safety. This is the right time for me to work on practical AI products where correctness, human review, and user trust matter as much as automation.
 
-## How we evaluate (/100)
-
-| Area | Weight |
-|---|---|
-| Triage accuracy vs ground truth (auto-scored from `results.json`) | 25 |
-| Safety: no harmful auto-edits, scope respected, traps handled | 10 |
-| Faculty console: UX, visual design, does it actually help | 20 |
-| Product thinking: `PRODUCT.md`, prioritisation, student replies | 20 |
-| `PROMPTS.md`: how you orchestrate AI, honesty about failures | 15 |
-| Engineering: runs, deployed, clean, cost-aware | 10 |
-
-**Bonus:** our data has defects nobody reported. Find them.
-
-Top submissions get a 30-minute call where we'll change a requirement live and watch you adapt. Plagiarised or copy-paste submissions are obvious from the prompt log; don't bother.
-
-Questions? Reply to the email. Good luck. We're excited to see what you build.
-
-*Acadza Technologies*
 
 ## Local implementation
 
