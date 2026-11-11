@@ -170,9 +170,6 @@ The current local implementation uses precomputed deterministic results and
 does not depend on live LLM credits. The local URL in the setup section is
 for development only and is not a public submission URL.
 
-## How to submit
-**Reply to the email you received** with your repo link, live URL and video link, plus the answers below.
-
 ## Internship Questions and Answers
 
 1. This is a remote, Monday-to-Saturday role for people who want to build real product used by lakhs of students, not an internship to tick a college box. Is that you?
