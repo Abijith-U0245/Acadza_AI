@@ -2,6 +2,73 @@
 
 **Deadline:** as stated in the email you received. **AI tools:** allowed and expected. **Stack:** your choice.
 
+## Final Submission
+
+- **GitHub Repository:** [https://github.com/Abijith-U0245/Acadza_AI](https://github.com/Abijith-U0245/Acadza_AI)
+- **Live Application:** [https://acadza-report-fix-alpha.vercel.app/app/](https://acadza-report-fix-alpha.vercel.app/app/)
+- **3-Minute Demo Video:** [https://drive.google.com/file/d/1WHTu-V9NNzvpD7EVQ8yHa4ob4KDVNVmQ/view?usp=sharing](https://drive.google.com/file/d/1WHTu-V9NNzvpD7EVQ8yHa4ob4KDVNVmQ/view?usp=sharing)
+
+## Application Screenshots and Output Walkthrough
+
+The screenshots below are genuine captures of the local faculty console using the
+shipped reports, questions, and deterministic `results.json` output. The
+application does not run an LLM at runtime: `scripts/triage.py` generates the
+precomputed results using the `OVERRIDES` table.
+
+### Dashboard Overview
+
+![Dashboard Overview](screenshots/dashboard-overview.png)
+
+The dashboard summarizes all 44 student reports and the resulting triage
+categories, including suspected defects, no-error cases, pending faculty
+reviews, and repairs approved in the current browser session.
+
+### Faculty Review Queue
+
+![Faculty Review Queue](screenshots/faculty-review-queue.png)
+
+Faculty can browse the report list, filter cases, search by report or question
+content, and identify related reports grouped around the same question.
+
+### Valid Repair Proposal — R022
+
+![Valid Repair Proposal — R022](screenshots/valid-repair-r022.png)
+
+This is a narrow, source-grounded correction from `plexux` to `plexus`, with
+evidence, confidence, validation status, and a before/after diff for explicit
+faculty approval.
+
+### Blocked Unsafe Proposal — R010
+
+![Blocked Unsafe Proposal — R010](screenshots/blocked-unsafe-r010.png)
+
+The console blocks a placeholder replacement instead of treating an instruction
+such as `[replace with the correct question]` as approval-ready question
+content.
+
+### No-Error Case — R040
+
+![No-Error Case — R040](screenshots/no-error-r040.png)
+
+This case shows a no-error verdict and no proposed content edit because the
+supplied evidence does not establish a defect.
+
+### Faculty Review Case — R015
+
+![Faculty Review Case — R015](screenshots/faculty-review-r015.png)
+
+The identical-options issue remains on the faculty-review route because creating
+a replacement distractor requires subject-matter authoring.
+
+### Audit History
+
+![Audit History](screenshots/audit-history-r022.png)
+
+This capture shows the audit entry created by the R022 approval action. Faculty
+actions are recorded in browser `sessionStorage` only; this is not a permanent
+server-side audit database, and approval does not publish or modify the
+production question.
+
 ---
 
 ## The problem (real, not invented)
@@ -95,31 +162,34 @@ We score this file automatically against our ground truth.
 
 ### Submission links
 
-- Public GitHub repository: **[TO COMPLETE: paste the public repository URL]**
-- Live faculty console: **https://acadza-report-fix-alpha.vercel.app/**
-- Three-minute demo video: **[TO COMPLETE: paste the Loom, unlisted YouTube, or Drive URL]**
+- Public GitHub repository: **[https://github.com/Abijith-U0245/Acadza_AI](https://github.com/Abijith-U0245/Acadza_AI)**
+- Live faculty console: **[https://acadza-report-fix-alpha.vercel.app/app/](https://acadza-report-fix-alpha.vercel.app/app/)**
+- Three-minute demo video: **[https://drive.google.com/file/d/1WHTu-V9NNzvpD7EVQ8yHa4ob4KDVNVmQ/view?usp=sharing](https://drive.google.com/file/d/1WHTu-V9NNzvpD7EVQ8yHa4ob4KDVNVmQ/view?usp=sharing)**
 
 The current local implementation uses precomputed deterministic results and
 does not depend on live LLM credits. The local URL in the setup section is
 for development only and is not a public submission URL.
 
 ## How to submit
-**Reply to the email you received** with your repo link, live URL and video link, plus answers to:
+**Reply to the email you received** with your repo link, live URL and video link, plus the answers below.
+
+## Internship Questions and Answers
+
 1. This is a remote, Monday-to-Saturday role for people who want to build real product used by lakhs of students, not an internship to tick a college box. Is that you?
 
-   **Answer — [TO CONFIRM]:** Yes. I want to work on software used by real students and faculty rather than treating the assignment as only a college exercise. This project interests me because it combines AI reasoning, product design, safety, and practical engineering.
+   **Answer:** Yes. I want to work on software used by real students and faculty rather than treating the assignment as only a college exercise. This project interests me because it combines AI reasoning, product design, safety, and practical engineering.
 
 2. How many months can you commit?
 
-   **Answer — [TO COMPLETE: enter your actual number of months]:** I can commit for **[X months]**.
+   **Answer:** I can commit for 6 months.
 
 3. Earliest start date.
 
-   **Answer — [TO COMPLETE: enter your actual earliest start date]:** My earliest start date is **[DD Month YYYY]**.
+   **Answer:** I am an immediate joiner and can start within one month.
 
 4. In 2-3 lines, in your own words: why this work, why now?
 
-   **Answer — [TO CONFIRM AND PERSONALIZE]:** I want to work on this because it addresses a real quality problem affecting students at scale, while requiring both strong engineering and careful AI safety. This is the right time for me to work on practical AI products where correctness, human review, and user trust matter as much as automation.
+   **Answer:** I want to work on this because it addresses a real quality problem affecting students at scale, while requiring both strong engineering and careful AI safety. This is the right time for me to work on practical AI products where correctness, human review, and user trust matter as much as automation.
 
 ## How we evaluate (/100)
 
